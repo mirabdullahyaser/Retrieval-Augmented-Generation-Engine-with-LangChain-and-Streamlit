@@ -14,6 +14,8 @@ from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores import Chroma, Pinecone
 from langchain.embeddings.openai import OpenAIEmbeddings
 
+import streamlit as st
+
 import nltk
 nltk.download('punkt')
 
@@ -64,17 +66,20 @@ def query_llm(retriever):
 
 def boot():
     #
-    documents = load_documents()
+    st.subheader('Research Assistant')
     #
-    texts = split_documents(documents)
-    #
-    if LOCAL_VECTORDB:
-        retriever = embeddings_on_local_vectordb(texts)
-    else:
-        retriever = embeddings_on_pinecone(texts)
-    #
-    query_llm(retriever)
+    # documents = load_documents()
+    # #
+    # texts = split_documents(documents)
+    # #
+    # if LOCAL_VECTORDB:
+    #     retriever = embeddings_on_local_vectordb(texts)
+    # else:
+    #     retriever = embeddings_on_pinecone(texts)
+    # #
+    # query_llm(retriever)
 
 
 if __name__ == '__main__':
+    #
     boot()
