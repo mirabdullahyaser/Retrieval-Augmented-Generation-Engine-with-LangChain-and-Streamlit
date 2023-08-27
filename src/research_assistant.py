@@ -14,15 +14,7 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 import streamlit as st
 
 LOCAL_VECTORDB = False
-
-# openai.api_key = os.getenv('OPENAI_API_KEY')
-# PINECONE_API_KEY = os.getenv('PINECONE_API_KEY')
-# PINECONE_API_ENV = 'gcp-starter'
-# PINECONE_INDEX = 'research-assistant'
-
 RESEARCH_PAPERS_DIR = Path(__file__).resolve().parent.parent.joinpath('data', 'papers')
-
-# QUERY = 'suggest a simple method to analyze crash simulations with machine learning'
 
 
 def load_documents():
