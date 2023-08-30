@@ -6,6 +6,7 @@ from langchain.chains import RetrievalQA, ConversationalRetrievalChain
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
 from langchain import OpenAI
+from langchain.llms import OpenAIChat
 from langchain.document_loaders import DirectoryLoader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores import Chroma, Pinecone
@@ -20,11 +21,11 @@ TMP_DIR = Path(__file__).resolve().parent.parent.joinpath('data', 'tmp')
 LOCAL_VECTOR_STORE_DIR = Path(__file__).resolve().parent.parent.joinpath('data', 'vector_store')
 
 st.set_page_config(page_title="RAG")
-st.title("RAG Engine")
+st.title("Retrieval Augmented Generation Engine")
 
 
 def load_documents():
-    loader = DirectoryLoader(TMP_DIR, glob='**/*.pdf')
+    loader = DirectoryLoader(TMP_DIR.as_posix(), glob='**/*.pdf')
     documents = loader.load()
     return documents
 
@@ -49,7 +50,7 @@ def embeddings_on_pinecone(texts):
 
 def query_llm(retriever, query):
     qa_chain = ConversationalRetrievalChain.from_llm(
-        llm=OpenAI(openai_api_key=st.session_state.openai_api_key),
+        llm=OpenAIChat(openai_api_key=st.session_state.openai_api_key),
         retriever=retriever,
         return_source_documents=True,
     )
@@ -89,26 +90,26 @@ def process_documents():
     if not st.session_state.openai_api_key or not st.session_state.pinecone_api_key or not st.session_state.pinecone_env or not st.session_state.pinecone_index or not st.session_state.source_docs:
         st.warning(f"Please upload the documents and provide the missing fields.")
     else:
-        # try:
-        for source_doc in st.session_state.source_docs:
-            #
-            with tempfile.NamedTemporaryFile(delete=False, dir=TMP_DIR.as_posix()) as tmp_file:
-                tmp_file.write(source_doc.read())
-            #
-            documents = load_documents()
-            #
-            for _file in TMP_DIR.iterdir():
-                temp_file = TMP_DIR.joinpath(_file)
-                temp_file.unlink()
-            #
-            texts = split_documents(documents)
-            #
-            if LOCAL_VECTORDB:
-                st.session_state.retriever = embeddings_on_local_vectordb(texts)
-            else:
-                st.session_state.retriever = embeddings_on_pinecone(texts)
-        # except Exception as e:
-        #     st.error(f"An error occurred: {e}")
+        try:
+            for source_doc in st.session_state.source_docs:
+                #
+                with tempfile.NamedTemporaryFile(delete=False, dir=TMP_DIR.as_posix(), suffix='.pdf') as tmp_file:
+                    tmp_file.write(source_doc.read())
+                #
+                documents = load_documents()
+                #
+                for _file in TMP_DIR.iterdir():
+                    temp_file = TMP_DIR.joinpath(_file)
+                    temp_file.unlink()
+                #
+                texts = split_documents(documents)
+                #
+                if LOCAL_VECTORDB:
+                    st.session_state.retriever = embeddings_on_local_vectordb(texts)
+                else:
+                    st.session_state.retriever = embeddings_on_pinecone(texts)
+        except Exception as e:
+            st.error(f"An error occurred: {e}")
 
 def boot():
     #
