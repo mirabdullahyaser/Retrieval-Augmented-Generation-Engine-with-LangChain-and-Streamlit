@@ -6,7 +6,7 @@ from langchain.chains import RetrievalQA, ConversationalRetrievalChain
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
 from langchain import OpenAI
-from langchain.llms import OpenAIChat
+from langchain.chat_models import OpenAIChat
 from langchain.document_loaders import DirectoryLoader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores import Chroma, Pinecone
@@ -16,7 +16,6 @@ from langchain.memory.chat_message_histories import StreamlitChatMessageHistory
 
 import streamlit as st
 
-LOCAL_VECTORDB = True
 TMP_DIR = Path(__file__).resolve().parent.parent.joinpath('data', 'tmp')
 LOCAL_VECTOR_STORE_DIR = Path(__file__).resolve().parent.parent.joinpath('data', 'vector_store')
 
@@ -83,7 +82,10 @@ def input_fields():
         else:
             st.session_state.pinecone_index = st.text_input("Pinecone index name")
     #
+    st.session_state.pinecone_db = st.toggle('Use Pinecone Vector DB')
+    #
     st.session_state.source_docs = st.file_uploader(label="Upload Documents", type="pdf", accept_multiple_files=True)
+    #
 
 
 def process_documents():
@@ -104,7 +106,7 @@ def process_documents():
                 #
                 texts = split_documents(documents)
                 #
-                if LOCAL_VECTORDB:
+                if not st.session_state.pinecone_db:
                     st.session_state.retriever = embeddings_on_local_vectordb(texts)
                 else:
                     st.session_state.retriever = embeddings_on_pinecone(texts)
