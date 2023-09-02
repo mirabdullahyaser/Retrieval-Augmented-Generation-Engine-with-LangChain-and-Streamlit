@@ -42,7 +42,7 @@ def embeddings_on_local_vectordb(texts):
 
 def embeddings_on_pinecone(texts):
     pinecone.init(api_key=st.session_state.pinecone_api_key, environment=st.session_state.pinecone_env)
-    embeddings = OpenAIEmbeddings(openai_api_key=os.getenv('OPENAI_API_KEY'))
+    embeddings = OpenAIEmbeddings(openai_api_key=st.session_state.openai_api_key)
     vectordb = Pinecone.from_documents(texts, embeddings, index_name=st.session_state.pinecone_index)
     retriever = vectordb.as_retriever()
     return retriever
