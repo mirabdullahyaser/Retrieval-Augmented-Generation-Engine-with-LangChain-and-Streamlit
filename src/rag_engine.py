@@ -6,7 +6,7 @@ from langchain.chains import RetrievalQA, ConversationalRetrievalChain
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
 from langchain import OpenAI
-from langchain.chat_models import OpenAIChat
+from langchain.llms.openai import OpenAIChat
 from langchain.document_loaders import DirectoryLoader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores import Chroma, Pinecone
