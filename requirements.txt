@@ -5,3 +5,4 @@ unstructured
 unstructured[pdf]
 openai
 chromadb
+tiktoken
