@@ -1,5 +1,7 @@
 # Retrieval Augmented Generation Engine using LangChain, Streamlit, & Pinecone
 
+[Access application on Streamlit Cloud Platform](https://retrieval-augmented-generation.streamlit.app/)
+
 ![Demo](data/demo.gif)
 
 ## Overview
