@@ -2,3 +2,4 @@ langchain==0.0.279
 pinecone_client==2.2.2
 streamlit==1.26.0
 unstructured
+unstructured[pdf]
