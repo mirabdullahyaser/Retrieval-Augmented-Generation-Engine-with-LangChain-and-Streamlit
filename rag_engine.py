@@ -1,7 +1,7 @@
 import os, tempfile
 import pinecone
 from pathlib import Path
-
+from dotenv import load_dotenv
 from langchain.chains import RetrievalQA, ConversationalRetrievalChain
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
@@ -13,9 +13,12 @@ from langchain.vectorstores import Chroma, Pinecone
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.memory import ConversationBufferMemory
 from langchain.memory.chat_message_histories import StreamlitChatMessageHistory
+from pinecone import Pinecone, ServerlessSpec
+
 
 import streamlit as st
 
+load_dotenv()
 
 TMP_DIR = Path(__file__).resolve().parent.joinpath('data', 'tmp')
 LOCAL_VECTOR_STORE_DIR = Path(__file__).resolve().parent.joinpath('data', 'vector_store')
@@ -42,9 +45,15 @@ def embeddings_on_local_vectordb(texts):
     return retriever
 
 def embeddings_on_pinecone(texts):
-    pinecone.init(api_key=st.session_state.pinecone_api_key, environment=st.session_state.pinecone_env)
+
+    pc = Pinecone(
+        api_key=st.session_state.pinecone_api_key,
+        environment=st.session_state.pinecone_env
+    )
+
+    # pc.init(api_key=st.session_state.pinecone_api_key, environment=st.session_state.pinecone_env)
     embeddings = OpenAIEmbeddings(openai_api_key=st.session_state.openai_api_key)
-    vectordb = Pinecone.from_documents(texts, embeddings, index_name=st.session_state.pinecone_index)
+    vectordb = pc.from_documents(texts, embeddings, index_name=st.session_state.pinecone_index)
     retriever = vectordb.as_retriever()
     return retriever
 
@@ -70,7 +79,7 @@ def input_fields():
         #
         if "pinecone_api_key" in st.secrets:
             st.session_state.pinecone_api_key = st.secrets.pinecone_api_key
-        else: 
+        else:
             st.session_state.pinecone_api_key = st.text_input("Pinecone API key", type="password")
         #
         if "pinecone_env" in st.secrets:
@@ -125,7 +134,7 @@ def boot():
     #
     for message in st.session_state.messages:
         st.chat_message('human').write(message[0])
-        st.chat_message('ai').write(message[1])    
+        st.chat_message('ai').write(message[1])
     #
     if query := st.chat_input():
         st.chat_message("human").write(query)
@@ -135,4 +144,3 @@ def boot():
 if __name__ == '__main__':
     #
     boot()
-    
