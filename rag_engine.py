@@ -40,7 +40,7 @@ def embeddings_on_local_vectordb(texts):
     retriever = vectordb.as_retriever(search_kwargs={'k': 7})
     return retriever
 
-def embedding_on_pinecone(texts):
+def embeddings_on_pinecone(texts):
     embeddings = OpenAIEmbeddings(openai_api_key=st.session_state.openai_api_key)
 
 
@@ -52,7 +52,7 @@ def query_llm(retriever, query):
 
 
     # TODO: export to sessions state
-    with_source = True
+    with_source = False
 
     llm = ChatOpenAI(
         openai_api_key=st.session_state.openai_api_key,
@@ -125,7 +125,7 @@ def process_documents():
                 if not st.session_state.pinecone_db:
                     st.session_state.retriever = embeddings_on_local_vectordb(texts)
                 else:
-                    st.session_state.retriever = embedding_on_pinecone(texts)
+                    st.session_state.retriever = embeddings_on_pinecone(texts)
         except Exception as e:
             st.error(f"An error occurred: {e}")
 
