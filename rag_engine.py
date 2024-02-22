@@ -1,19 +1,16 @@
 import os, tempfile
-import pinecone
 from pathlib import Path
 from dotenv import load_dotenv
 from langchain.chains import RetrievalQA, ConversationalRetrievalChain
-# from langchain_community.embeddings import OpenAIEmbeddings
-# from langchain_community.vectorstores import Chroma
-# from langchain import OpenAI
 from langchain_community.llms.openai import OpenAIChat
 from langchain_community.document_loaders import DirectoryLoader
 from langchain.text_splitter import CharacterTextSplitter
-from langchain_community.vectorstores import Chroma, Pinecone
-# from langchain_community.embeddings.openai import OpenAIEmbeddings
+from langchain_pinecone import Pinecone
+from langchain_community.vectorstores import Chroma
 from langchain_openai import OpenAIEmbeddings
 from langchain.memory import ConversationBufferMemory
-# from langchain_community.chat_message_historie import StreamlitChatMessageHistory
+from langchain_openai import ChatOpenAI
+from langchain.chains import RetrievalQA, RetrievalQAWithSourcesChain
 
 import streamlit as st
 
@@ -43,37 +40,18 @@ def embeddings_on_local_vectordb(texts):
     retriever = vectordb.as_retriever(search_kwargs={'k': 7})
     return retriever
 
-def embeddings_on_pinecone(texts):
-    pinecone.init(api_key=st.session_state.pinecone_api_key, environment=st.session_state.pinecone_env)
+def embedding_on_pinecone(texts):
     embeddings = OpenAIEmbeddings(openai_api_key=st.session_state.openai_api_key)
-    vectordb = Pinecone.from_documents(texts, embeddings, index_name=st.session_state.pinecone_index)
-    retriever = vectordb.as_retriever()
-    return retriever
 
-def embedding_on_pinecone_new(texts):
-    # from langchain_community.embeddings.openai import OpenAIEmbeddings
-    embeddings = OpenAIEmbeddings(openai_api_key=st.session_state.openai_api_key)
-    from langchain_pinecone import Pinecone
 
-    index_name = "quickstart"
+    index_name = st.session_state.pinecone_index
     docsearch = Pinecone.from_documents(texts , embeddings, index_name=index_name)
     return docsearch.as_retriever()
 
 def query_llm(retriever, query):
-    qa_chain = ConversationalRetrievalChain.from_llm(
-        llm=OpenAIChat(openai_api_key=st.session_state.openai_api_key),
-        retriever=retriever,
-        return_source_documents=True,
-    )
-    result = qa_chain({'question': query, 'chat_history': st.session_state.messages})
-    result = result['answer']
-    st.session_state.messages.append((query, result))
-    return result
 
-def query_llm_new(retriever, query):
-    from langchain_openai import ChatOpenAI
-    from langchain.chains import RetrievalQA, RetrievalQAWithSourcesChain
 
+    # TODO: export to sessions state
     with_source = True
 
     llm = ChatOpenAI(
@@ -86,6 +64,7 @@ def query_llm_new(retriever, query):
         chain_type="stuff",
         retriever=retriever
     )
+
     qa_with_sources = RetrievalQAWithSourcesChain.from_chain_type(
         llm=llm,
         chain_type="stuff",
@@ -146,7 +125,7 @@ def process_documents():
                 if not st.session_state.pinecone_db:
                     st.session_state.retriever = embeddings_on_local_vectordb(texts)
                 else:
-                    st.session_state.retriever = embedding_on_pinecone_new(texts)
+                    st.session_state.retriever = embedding_on_pinecone(texts)
         except Exception as e:
             st.error(f"An error occurred: {e}")
 
@@ -165,7 +144,7 @@ def boot():
     #
     if query := st.chat_input():
         st.chat_message("human").write(query)
-        response = query_llm_new(st.session_state.retriever, query)
+        response = query_llm(st.session_state.retriever, query)
         st.chat_message("ai").write(response)
 
 if __name__ == '__main__':
