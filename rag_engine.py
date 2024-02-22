@@ -13,8 +13,6 @@ from langchain.vectorstores import Chroma, Pinecone
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.memory import ConversationBufferMemory
 from langchain.memory.chat_message_histories import StreamlitChatMessageHistory
-from pinecone import Pinecone, ServerlessSpec
-
 
 import streamlit as st
 
@@ -45,17 +43,20 @@ def embeddings_on_local_vectordb(texts):
     return retriever
 
 def embeddings_on_pinecone(texts):
-
-    pc = Pinecone(
-        api_key=st.session_state.pinecone_api_key,
-        environment=st.session_state.pinecone_env
-    )
-
-    # pc.init(api_key=st.session_state.pinecone_api_key, environment=st.session_state.pinecone_env)
+    pinecone.init(api_key=st.session_state.pinecone_api_key, environment=st.session_state.pinecone_env)
     embeddings = OpenAIEmbeddings(openai_api_key=st.session_state.openai_api_key)
-    vectordb = pc.from_documents(texts, embeddings, index_name=st.session_state.pinecone_index)
+    vectordb = Pinecone.from_documents(texts, embeddings, index_name=st.session_state.pinecone_index)
     retriever = vectordb.as_retriever()
     return retriever
+
+def embedding_on_pinecone_new(texts):
+    from langchain_openai import OpenAIEmbeddings
+    embeddings = OpenAIEmbeddings(openai_api_key=st.session_state.openai_api_key)
+    from langchain_pinecone import Pinecone
+
+    index_name = "quickstart"
+    docsearch = Pinecone.from_documents(texts , embeddings, index_name=index_name)
+    return docsearch.as_retriever()
 
 def query_llm(retriever, query):
     qa_chain = ConversationalRetrievalChain.from_llm(
@@ -65,6 +66,23 @@ def query_llm(retriever, query):
     )
     result = qa_chain({'question': query, 'chat_history': st.session_state.messages})
     result = result['answer']
+    st.session_state.messages.append((query, result))
+    return result
+
+def query_llm_new(retriever, query):
+    from langchain.chat_models import ChatOpenAI
+    from langchain.chains import RetrievalQA
+    llm = ChatOpenAI(
+        openai_api_key=st.session_state.openai_api_key,
+        model_name='gpt-3.5-turbo',
+        temperature=0.0
+    )
+    qa = RetrievalQA.from_chain_type(
+        llm=llm,
+        chain_type="stuff",
+        retriever=retriever
+    )
+    result = qa.run(query)
     st.session_state.messages.append((query, result))
     return result
 
@@ -119,7 +137,7 @@ def process_documents():
                 if not st.session_state.pinecone_db:
                     st.session_state.retriever = embeddings_on_local_vectordb(texts)
                 else:
-                    st.session_state.retriever = embeddings_on_pinecone(texts)
+                    st.session_state.retriever = embedding_on_pinecone_new(texts)
         except Exception as e:
             st.error(f"An error occurred: {e}")
 
@@ -138,7 +156,7 @@ def boot():
     #
     if query := st.chat_input():
         st.chat_message("human").write(query)
-        response = query_llm(st.session_state.retriever, query)
+        response = query_llm_new(st.session_state.retriever, query)
         st.chat_message("ai").write(response)
 
 if __name__ == '__main__':
