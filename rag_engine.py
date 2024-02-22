@@ -71,7 +71,10 @@ def query_llm(retriever, query):
 
 def query_llm_new(retriever, query):
     from langchain.chat_models import ChatOpenAI
-    from langchain.chains import RetrievalQA
+    from langchain.chains import RetrievalQA, RetrievalQAWithSourcesChain
+
+    with_source = True
+
     llm = ChatOpenAI(
         openai_api_key=st.session_state.openai_api_key,
         model_name='gpt-3.5-turbo',
@@ -82,7 +85,12 @@ def query_llm_new(retriever, query):
         chain_type="stuff",
         retriever=retriever
     )
-    result = qa.run(query)
+    qa_with_sources = RetrievalQAWithSourcesChain.from_chain_type(
+        llm=llm,
+        chain_type="stuff",
+        retriever=retriever
+    )
+    result = qa_with_sources(query) if with_source else qa(query)
     st.session_state.messages.append((query, result))
     return result
 
