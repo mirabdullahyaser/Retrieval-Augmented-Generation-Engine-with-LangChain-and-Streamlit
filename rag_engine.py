@@ -3,16 +3,17 @@ import pinecone
 from pathlib import Path
 from dotenv import load_dotenv
 from langchain.chains import RetrievalQA, ConversationalRetrievalChain
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.vectorstores import Chroma
-from langchain import OpenAI
-from langchain.llms.openai import OpenAIChat
-from langchain.document_loaders import DirectoryLoader
+# from langchain_community.embeddings import OpenAIEmbeddings
+# from langchain_community.vectorstores import Chroma
+# from langchain import OpenAI
+from langchain_community.llms.openai import OpenAIChat
+from langchain_community.document_loaders import DirectoryLoader
 from langchain.text_splitter import CharacterTextSplitter
-from langchain.vectorstores import Chroma, Pinecone
-from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain_community.vectorstores import Chroma, Pinecone
+# from langchain_community.embeddings.openai import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from langchain.memory import ConversationBufferMemory
-from langchain.memory.chat_message_histories import StreamlitChatMessageHistory
+# from langchain_community.chat_message_historie import StreamlitChatMessageHistory
 
 import streamlit as st
 
@@ -50,7 +51,7 @@ def embeddings_on_pinecone(texts):
     return retriever
 
 def embedding_on_pinecone_new(texts):
-    from langchain_openai import OpenAIEmbeddings
+    # from langchain_community.embeddings.openai import OpenAIEmbeddings
     embeddings = OpenAIEmbeddings(openai_api_key=st.session_state.openai_api_key)
     from langchain_pinecone import Pinecone
 
@@ -70,7 +71,7 @@ def query_llm(retriever, query):
     return result
 
 def query_llm_new(retriever, query):
-    from langchain.chat_models import ChatOpenAI
+    from langchain_openai import ChatOpenAI
     from langchain.chains import RetrievalQA, RetrievalQAWithSourcesChain
 
     with_source = True
